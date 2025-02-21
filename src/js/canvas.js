@@ -1,99 +1,119 @@
 import Utils from './utils.js'
 
-const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
+import fragment from '../../asset/shader/fragment.glsl'
+import vertex from '../../asset/shader/vertex.glsl'
 
-const settings = {
-  animate: true,
-  duration: 10,
-  dimensions: [1080, 1920],
-  fps: 36,
-  loop: true,
-}
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GUI } from 'lil-gui'
 
-canvas.width = innerWidth
-canvas.height = innerHeight
+import { gsap } from 'gsap'
 
-const mouse = {
-  x: innerWidth / 2,
-  y: innerHeight / 2,
-}
+export default class Sketch {
+  constructor(selector) {
+    this.scene = new THREE.Scene()
 
-const colors = ['#ffffff', '#000000', '#FFF6E5', '#FF7F66']
+    this.renderer = new THREE.WebGLRenderer({ antialias: true })
+    this.width = window.innerWidth
+    this.height = window.innerHeight
+    this.renderer.setPixelRatio(window.devicePixelRatio)
+    this.renderer.setSize(this.width, this.height)
+    this.renderer.setClearColor(0xd2d2d2, 1)
 
-// Event Listeners
-addEventListener('mousemove', (event) => {
-  mouse.x = event.clientX
-  mouse.y = event.clientY
-})
+    this.container = document.getElementById('container')
+    this.width = this.container.offsetWidth
+    this.height = this.container.offsetHeight
+    this.container.appendChild(this.renderer.domElement)
 
-addEventListener('resize', () => {
-  canvas.width = innerWidth
-  canvas.height = innerHeight
+    this.camera = new THREE.PerspectiveCamera(
+      70,
+      this.width / this.height,
+      0.001,
+      1000
+    )
 
-  init()
-})
+    // var frustumSize = 10
+    // var aspect = window.innerWidth / window.innerHeight
+    // this.camera = new THREE.OrthographicCamera(
+    //   (frustumSize * aspect) / -2,
+    //   frustumSize
+    // )
+    this.camera.position.set(0, 0, 4)
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.time = 0
 
-// Objects
-class Object {
-  constructor(color) {
-    this.color = color
+    this.paused = false
+
+    this.setupResized()
+
+    this.addObject()
+    this.resize()
+    this.render()
+    this.settings()
   }
 
-  draw() {
-    c.beginPath()
-    c.fill()
-    c.closePath()
-  }
-
-  update(playhead) {
-    this.draw()
-  }
-}
-
-// Implementation
-let objects
-function init() {
-  objects = []
-
-  for (let i = 0; i < 2; i++) {
-    objects.push(new Object(colors[i]))
-  }
-}
-
-// Animation Loop
-let startTime = null
-
-function animate(time) {
-  if (!startTime) startTime = time
-  const elapsedTime = (time - startTime) / 1000
-
-  let playhead = (elapsedTime % settings.duration) / settings.duration
-
-  c.fillStyle = `rgba(255,255,255)`
-  c.fillRect(0, 0, canvas.width, canvas.height)
-
-  c.save()
-  c.translate(innerWidth / 2, innerHeight / 2)
-
-  objects.forEach((object, i) => {
-    object.update(playhead)
-  })
-  c.restore()
-
-  if (settings.loop) {
-    if (settings.animate) {
-      requestAnimationFrame(animate) // Continue the animation
+  settings() {
+    let that = this
+    this.settings = {
+      time: 0,
     }
-  } else {
-    if (settings.animate && elapsedTime < settings.duration) {
-      requestAnimationFrame(animate) // Continue the animation
-    }
+    this.gui = new GUI()
+
+    this.gui.add(this.settings, 'time', 0, 100, 0.01)
+  }
+
+  setupResized() {
+    window.addEventListener('resize', this.resize.bind(this))
+  }
+  resize() {
+    this.width = this.container.offsetWidth
+    this.height = this.container.offsetHeight
+    this.renderer.setSize(this.width, this.height)
+    this.camera.aspect = this.width / this.height
+
+    this.camera.updateProjectionMatrix()
+  }
+  addObject() {
+    let that = this
+    this.material = new THREE.ShaderMaterial({
+      extensions: {
+        derivatives: '#extension GL_OES_standard_derivatives : enable',
+      },
+      side: THREE.DoubleSide,
+      uniforms: {
+        time: { type: 'f', value: 0 },
+        resolution: { type: 'v4', value: new THREE.Vector4() },
+        uvRate1: {
+          value: new THREE.Vector2(1, 1),
+        },
+      },
+      // wireframe: true,
+      // transparent: true,
+      vertexShader: vertex,
+      fragmentShader: fragment,
+    })
+
+    this.geometry = new THREE.PlaneGeometry(1, 1, 1, 1)
+
+    this.plane = new THREE.Mesh(this.geometry, this.material)
+    this.scene.add(this.plane)
+  }
+
+  stop() {
+    this.paused = true
+  }
+
+  play() {
+    this.paused = false
+    this.render()
+  }
+
+  render() {
+    if (this.paused) return
+    this.time += 0.05
+    this.material.uniforms.time.value = this.time
+    requestAnimationFrame(this.render.bind(this))
+    this.renderer.render(this.scene, this.camera)
   }
 }
-
-init()
-animate(0)
-
-function startCanvas() {}
-export { startCanvas }
+const tl = gsap.timeline()

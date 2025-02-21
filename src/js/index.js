@@ -1,3 +1,3 @@
-import { startCanvas } from './canvas.js'
+import Sketch from './canvas.js'
 
-startCanvas
+new Sketch()

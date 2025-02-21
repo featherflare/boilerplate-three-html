@@ -12,6 +12,7 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true, // Clean the dist folder on each build
+    assetModuleFilename: 'assets/[name][ext]',
   },
 
   devServer: {
@@ -35,6 +36,9 @@ module.exports = {
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
+        generator: {
+          filename: 'assets/styles/[name][ext]', // CSS files inside `dist/assets/styles/`
+        },
       },
       {
         test: /\.scss$/, // SCSS handling
@@ -43,10 +47,37 @@ module.exports = {
           'css-loader', // Resolve CSS imports
           'sass-loader', // Compile SCSS to CSS
         ],
+        generator: {
+          filename: 'assets/styles/[name][ext]', // CSS files inside `dist/assets/styles/`
+        },
       },
       {
         test: /\.(png|jpg|jpeg|gif|svg)$/, // Handle assets like images
         type: 'asset/resource',
+        generator: {
+          filename: 'assets/images/[name][ext]', // Images inside `dist/assets/images/`
+        },
+      },
+      {
+        test: /\.(glsl|vs|fs|vert|frag)$/, // GLSL support
+        use: [
+          {
+            loader: 'raw-loader', // Loads GLSL as raw text
+          },
+          {
+            loader: 'glslify-loader', // Allows use of glslify syntax
+          },
+        ],
+        generator: {
+          filename: 'assets/shader/[name][ext]', // GLSL files inside `dist/assets/shader/`
+        },
+      },
+      {
+        test: /\.(hdr)$/, // HDR support
+        type: 'asset/resource',
+        generator: {
+          filename: 'assets/hdr/[name][ext]', // HDR files go inside `dist/assets/hdr/`
+        },
       },
     ],
   },
