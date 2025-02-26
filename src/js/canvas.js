@@ -71,6 +71,33 @@ export default class Sketch {
     this.renderer.setSize(this.width, this.height)
     this.camera.aspect = this.width / this.height
 
+    // //optional - set camera and canvas fit window
+    // this.imageAspect = 1080 / 1920
+    // let a1, a2
+    // if (this.height / this.width > this.imageAspect) {
+    //   a1 = (this.width / this.height) * this.imageAspect
+    //   a2 = 1
+    // } else {
+    //   a1 = 1
+    //   a2 = this.height / this.width / this.imageAspect
+    // }
+
+    // this.material.uniforms.resolution.value.x = this.width
+    // this.material.uniforms.resolution.value.y = this.height
+    // this.material.uniforms.resolution.value.z = a1
+    // this.material.uniforms.resolution.value.w = a2
+
+    // //optional - cover with quadrant
+    // const dist = this.camera.position.z
+    // const height = 0.8
+    // this.camera.fov = 2 * (180 / Math.PI) * Math.atan(height / (2 * dist))
+
+    // if (this.width / this.height > 1) {
+    //   this.plane.scale.x = this.camera.aspect
+    // } else {
+    //   this.plane.scale.y = 1 / this.camera.aspect
+    // }
+
     this.camera.updateProjectionMatrix()
   }
   addObject() {
